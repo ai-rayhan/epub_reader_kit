@@ -14,6 +14,7 @@ import android.widget.EditText
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.BundleCompat
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
@@ -33,7 +34,10 @@ import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.epub.pageList
 import com.example.epub_reader_kit.reader.LITERATA
+import com.example.epub_reader_kit.reader.NOTO_SANS_BENGALI
+import com.example.epub_reader_kit.reader.NOTO_SERIF_BENGALI
 import com.example.epub_reader_kit.reader.R
+import com.example.epub_reader_kit.reader.TIRO_BANGLA
 import com.example.epub_reader_kit.EpubReaderKitPlugin
 import com.example.epub_reader_kit.reader.reader.preferences.UserPreferencesViewModel
 import com.example.epub_reader_kit.reader.search.SearchFragment
@@ -96,6 +100,27 @@ class EpubReaderFragment : VisualReaderFragment() {
                             addSource("fonts/Literata-Italic-VariableFont_opsz,wght.ttf")
                             setFontStyle(FontStyle.ITALIC)
                             setFontWeight(200..900)
+                        }
+                    }
+
+                    addFontFamilyDeclaration(FontFamily.NOTO_SANS_BENGALI) {
+                        addFontFace {
+                            addSource("fonts/NotoSansBengali-Regular.ttf")
+                            setFontStyle(FontStyle.NORMAL)
+                        }
+                    }
+
+                    addFontFamilyDeclaration(FontFamily.NOTO_SERIF_BENGALI) {
+                        addFontFace {
+                            addSource("fonts/NotoSerifBengali-Regular.ttf")
+                            setFontStyle(FontStyle.NORMAL)
+                        }
+                    }
+
+                    addFontFamilyDeclaration(FontFamily.TIRO_BANGLA) {
+                        addFontFace {
+                            addSource("fonts/TiroBangla-Regular.ttf")
+                            setFontStyle(FontStyle.NORMAL)
                         }
                     }
                 }
@@ -283,10 +308,12 @@ class EpubReaderFragment : VisualReaderFragment() {
     }
 
     fun closeSearchFromChrome() {
-        val fragment = childFragmentManager.findFragmentByTag(SEARCH_FRAGMENT_TAG)
-        if (fragment != null && !navigator.isHidden) return
-
-        childFragmentManager.popBackStack(SEARCH_FRAGMENT_TAG, 0)
+        val fragment = childFragmentManager.findFragmentByTag(SEARCH_FRAGMENT_TAG) ?: return
+        if (!fragment.isAdded) return
+        childFragmentManager.popBackStack(
+            SEARCH_FRAGMENT_TAG,
+            FragmentManager.POP_BACK_STACK_INCLUSIVE
+        )
     }
 
     fun currentThemeFromPreferences(): Theme? {
@@ -299,6 +326,32 @@ class EpubReaderFragment : VisualReaderFragment() {
         val settings = model.settings as? UserPreferencesViewModel<EpubSettings, EpubPreferences> ?: return
         val editor = settings.editor.value as? EpubPreferencesEditor ?: return
         editor.theme.set(theme)
+        settings.commit()
+    }
+
+    fun currentFontFamilyFromPreferences(): FontFamily? {
+        val settings = model.settings as? UserPreferencesViewModel<EpubSettings, EpubPreferences> ?: return null
+        val editor = settings.editor.value as? EpubPreferencesEditor ?: return null
+        return editor.fontFamily.value ?: editor.fontFamily.effectiveValue
+    }
+
+    fun applyFontFamilyFromChrome(fontFamily: FontFamily?) {
+        val settings = model.settings as? UserPreferencesViewModel<EpubSettings, EpubPreferences> ?: return
+        val editor = settings.editor.value as? EpubPreferencesEditor ?: return
+        editor.fontFamily.set(fontFamily)
+        settings.commit()
+    }
+
+    fun currentFontSizeFromPreferences(): Double {
+        val settings = model.settings as? UserPreferencesViewModel<EpubSettings, EpubPreferences> ?: return 1.0
+        val editor = settings.editor.value as? EpubPreferencesEditor ?: return 1.0
+        return editor.fontSize.value ?: editor.fontSize.effectiveValue
+    }
+
+    fun applyFontSizeFromChrome(size: Double) {
+        val settings = model.settings as? UserPreferencesViewModel<EpubSettings, EpubPreferences> ?: return
+        val editor = settings.editor.value as? EpubPreferencesEditor ?: return
+        editor.fontSize.set(size.coerceIn(0.6, 2.2))
         settings.commit()
     }
 

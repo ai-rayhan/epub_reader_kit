@@ -66,15 +66,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
@@ -83,8 +80,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.TextFields
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
@@ -117,8 +112,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -137,11 +134,16 @@ import org.readium.r2.navigator.util.DirectionalNavigationAdapter
 import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.util.Language
+import com.example.epub_reader_kit.reader.LITERATA
+import com.example.epub_reader_kit.reader.NOTO_SANS_BENGALI
+import com.example.epub_reader_kit.reader.NOTO_SERIF_BENGALI
 import com.example.epub_reader_kit.reader.R
+import com.example.epub_reader_kit.reader.TIRO_BANGLA
+import com.example.epub_reader_kit.reader.data.model.Bookmark
 import com.example.epub_reader_kit.reader.data.model.Highlight
 import com.example.epub_reader_kit.reader.databinding.FragmentReaderBinding
+import org.readium.r2.navigator.preferences.FontFamily
 import org.readium.r2.navigator.preferences.Theme
-import com.example.epub_reader_kit.reader.reader.tts.TtsControls
 import com.example.epub_reader_kit.reader.reader.tts.TtsPreferencesBottomSheetDialogFragment
 import com.example.epub_reader_kit.reader.reader.tts.TtsViewModel
 import com.example.epub_reader_kit.reader.reader.preferences.MainPreferencesBottomSheetDialogFragment
@@ -174,8 +176,9 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
     private var isReadingChapter by mutableStateOf(false)
     private var isSpeechPlaying by mutableStateOf(false)
     private var isFullscreen by mutableStateOf(false)
-    private var isTtsBarVisible by mutableStateOf(false)   // selected-text TTS bar
-    private var isTtsListening by mutableStateOf(false)    // is selected-text TTS playing
+    private var brightnessLevel by mutableFloatStateOf(0.8f)
+    private var fontSizeScale by mutableFloatStateOf(1.0f)
+    private var selectedFontFamily by mutableStateOf<FontFamily?>(null)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -251,10 +254,18 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
         @Suppress("DEPRECATION")
         val visibility = requireActivity().window.decorView.systemUiVisibility
         isReaderChromeVisible = (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0
+        isFullscreen = !isReaderChromeVisible
 
         @Suppress("DEPRECATION")
         requireActivity().window.decorView.setOnSystemUiVisibilityChangeListener { newVisibility ->
             isReaderChromeVisible = (newVisibility and View.SYSTEM_UI_FLAG_FULLSCREEN) == 0
+            isFullscreen = !isReaderChromeVisible
+        }
+
+        brightnessLevel = currentScreenBrightness()
+        (this as? EpubReaderFragment)?.let {
+            fontSizeScale = it.currentFontSizeFromPreferences().toFloat()
+            selectedFontFamily = it.currentFontFamilyFromPreferences()
         }
 
         val menuHost: MenuHost = requireActivity()
@@ -293,9 +304,11 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                 title = model.publication.metadata.title ?: "",
                 onBack = { requireActivity().onBackPressedDispatcher.onBackPressed() },
                 onSearch = { (this@VisualReaderFragment as? EpubReaderFragment)?.openSearchDialogFromChrome() },
-                onBookmark = {
-                    isBookmarked = !isBookmarked
-                    model.insertBookmark(navigator.currentLocator.value)
+                onBookmark = { model.insertBookmark(navigator.currentLocator.value) },
+                onOpenBookmarks = {
+                    model.activityChannel.send(
+                        ReaderViewModel.ActivityCommand.OpenBookmarksRequested
+                    )
                 },
                 onOpenOutline = {
                     model.activityChannel.send(
@@ -314,13 +327,17 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                     isFontPanelVisible = !isFontPanelVisible
                     if (isFontPanelVisible) isThemePanelVisible = false
                 },
-                onToggleFullscreen = { isFullscreen = !isFullscreen },
+                onToggleFullscreen = { requireActivity().toggleSystemUi() },
                 onToggleChapterReading = {
-                    isReadingChapter = !isReadingChapter
-                    if (isReadingChapter) {
+                    val tts = model.tts ?: return@ReaderChrome
+                    if (!isReadingChapter) {
+                        tts.start(navigator)
+                        isReadingChapter = true
                         isSpeechPlaying = true
-                        isTtsBarVisible = false   // close selection-TTS bar when chapter reading starts
-                        isTtsListening = false
+                    } else {
+                        tts.stop()
+                        isReadingChapter = false
+                        isSpeechPlaying = false
                     }
                 },
                 isThemePanelVisible = isThemePanelVisible,
@@ -329,13 +346,24 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                 isReadingChapter = isReadingChapter,
                 isSpeechPlaying = isSpeechPlaying,
                 isFullscreen = isFullscreen,
-                isTtsBarVisible = isTtsBarVisible,
-                isTtsListening = isTtsListening,
-                onCloseTtsBar = {
-                    isTtsBarVisible = false
-                    isTtsListening = false
+                hasTts = model.tts != null,
+                brightness = brightnessLevel,
+                onBrightnessChange = { value ->
+                    brightnessLevel = value
+                    applyScreenBrightness(value)
                 },
-                onToggleTtsListen = { isTtsListening = !isTtsListening },
+                fontScale = fontSizeScale,
+                onFontScaleChange = { scale ->
+                    fontSizeScale = scale
+                    (this@VisualReaderFragment as? EpubReaderFragment)
+                        ?.applyFontSizeFromChrome(scale.toDouble())
+                },
+                selectedFontFamily = selectedFontFamily,
+                onFontFamilySelected = { family ->
+                    selectedFontFamily = family
+                    (this@VisualReaderFragment as? EpubReaderFragment)
+                        ?.applyFontFamilyFromChrome(family)
+                },
                 selectedTheme = (this@VisualReaderFragment as? EpubReaderFragment)?.currentThemeFromPreferences(),
                 onThemeSelected = { theme ->
                     (this@VisualReaderFragment as? EpubReaderFragment)?.applyThemeFromChrome(theme)
@@ -359,6 +387,7 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
         onBack: () -> Unit,
         onSearch: () -> Unit,
         onBookmark: () -> Unit,
+        onOpenBookmarks: () -> Unit,
         onOpenOutline: () -> Unit,
         onOpenSettings: () -> Unit,
         onToggleThemePanel: () -> Unit,
@@ -371,10 +400,13 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
         isReadingChapter: Boolean,
         isSpeechPlaying: Boolean,
         isFullscreen: Boolean,
-        isTtsBarVisible: Boolean,
-        isTtsListening: Boolean,
-        onCloseTtsBar: () -> Unit,
-        onToggleTtsListen: () -> Unit,
+        hasTts: Boolean,
+        brightness: Float,
+        onBrightnessChange: (Float) -> Unit,
+        fontScale: Float,
+        onFontScaleChange: (Float) -> Unit,
+        selectedFontFamily: FontFamily?,
+        onFontFamilySelected: (FontFamily?) -> Unit,
         selectedTheme: Theme?,
         onThemeSelected: (Theme) -> Unit,
         ttsModel: TtsViewModel?,
@@ -387,7 +419,6 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
         val text2Color    = ComposeColor(0xFF57636C)
         val borderColor   = ComposeColor(0x14000000)  // rgba(0,0,0,0.08)
         val alternateColor = ComposeColor(0xFFE0E3E7)
-        val goldColor     = ComposeColor(0xFFFFD700)
 
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -449,12 +480,14 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                             onClick = onSearch
                         )
                         // TTS / headphone
-                        AppBarIconBtn(
-                            icon = Icons.Default.Headphones,
-                            description = "Read Aloud",
-                            tint = if (isReadingChapter) primaryColor else textColor,
-                            onClick = onToggleChapterReading
-                        )
+                        if (hasTts) {
+                            AppBarIconBtn(
+                                icon = Icons.Default.Headphones,
+                                description = "Read Aloud",
+                                tint = if (isReadingChapter) primaryColor else textColor,
+                                onClick = onToggleChapterReading
+                            )
+                        }
                         // Bookmark — stays textColor when active (matches HTML)
                         AppBarIconBtn(
                             icon = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
@@ -482,85 +515,6 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                     .background(bgColor)
                     .shadow(elevation = 1.dp)
             ) {
-
-                // 0. TTS Selection Bar (shown when user selects text, not reading chapter)
-                AnimatedVisibility(
-                    visible = isTtsBarVisible && !isReadingChapter,
-                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Close button
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(alternateColor.copy(alpha = 0.5f))
-                                .clickable(onClick = onCloseTtsBar),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close",
-                                tint = textColor,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        // Listen / Stop button (flex: 1)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(50.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(if (isTtsListening) ComposeColor(0xFFF44336) else primaryColor)
-                                .clickable(onClick = onToggleTtsListen),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isTtsListening) Icons.Default.Stop else Icons.Default.VolumeUp,
-                                    contentDescription = if (isTtsListening) "Stop" else "Listen",
-                                    tint = ComposeColor.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = if (isTtsListening) "Stop" else "Listen",
-                                    color = ComposeColor.White,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
-                        // Settings button
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(alternateColor.copy(alpha = 0.5f))
-                                .clickable(onClick = onTtsPreferences),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "TTS Settings",
-                                tint = textColor,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-                }
-
                 // 1. Speech Player Bar (when reading chapter) ─────────────
                 AnimatedVisibility(
                     visible = isReadingChapter && ttsModel != null,
@@ -625,10 +579,7 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                                             desc = "Stop",
                                             tint = text2Color,
                                             onClick = {
-                                                tts.stop()
-                                                if (isReadingChapter) {
-                                                    onToggleChapterReading()
-                                                }
+                                                onToggleChapterReading()
                                             }
                                         )
                                     }
@@ -650,7 +601,6 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         // Brightness slider row
-                        var brightness by remember { mutableFloatStateOf(0.8f) }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -666,7 +616,7 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                             )
                             Slider(
                                 value = brightness,
-                                onValueChange = { brightness = it },
+                                onValueChange = onBrightnessChange,
                                 modifier = Modifier.weight(1f),
                                 colors = SliderDefaults.colors(
                                     thumbColor = primaryColor,
@@ -746,7 +696,6 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         // Font size slider
-                        var fontSize by remember { mutableFloatStateOf(0.4f) }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -758,11 +707,16 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                                 imageVector = Icons.Default.TextFields,
                                 contentDescription = "Font size small",
                                 tint = primaryColor,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clickable {
+                                        onFontScaleChange((fontScale - 0.1f).coerceIn(0.6f, 2.2f))
+                                    }
                             )
                             Slider(
-                                value = fontSize,
-                                onValueChange = { fontSize = it },
+                                value = fontScale.coerceIn(0.6f, 2.2f),
+                                valueRange = 0.6f..2.2f,
+                                onValueChange = onFontScaleChange,
                                 modifier = Modifier.weight(1f),
                                 colors = SliderDefaults.colors(
                                     thumbColor = primaryColor,
@@ -774,13 +728,23 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                                 imageVector = Icons.Default.TextFields,
                                 contentDescription = "Font size large",
                                 tint = primaryColor,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clickable {
+                                        onFontScaleChange((fontScale + 0.1f).coerceIn(0.6f, 2.2f))
+                                    }
                             )
                         }
 
                         // Font family options (scrollable)
-                        val fontOptions = listOf("Default", "Serif", "Monospace", "Cursive", "Noto Sans")
-                        var selectedFont by remember { mutableStateOf(fontOptions[0]) }
+                        val fontOptions = listOf(
+                            "Default" to null,
+                            "Literata" to FontFamily.LITERATA,
+                            "Sans Serif" to FontFamily.SANS_SERIF,
+                            "Noto Sans Bengali" to FontFamily.NOTO_SANS_BENGALI,
+                            "Noto Serif Bengali" to FontFamily.NOTO_SERIF_BENGALI,
+                            "Tiro Bangla" to FontFamily.TIRO_BANGLA
+                        )
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -788,16 +752,16 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                                 .padding(horizontal = 6.dp, vertical = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            fontOptions.forEach { font ->
-                                val isFontSelected = selectedFont == font
+                            fontOptions.forEach { (fontLabel, fontFamily) ->
+                                val isFontSelected = selectedFontFamily == fontFamily
                                 Text(
-                                    text = font,
+                                    text = fontLabel,
                                     fontSize = 12.sp,
                                     color = if (isFontSelected) primaryColor else text2Color,
                                     fontWeight = if (isFontSelected) FontWeight.Bold else FontWeight.Normal,
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
-                                        .clickable { selectedFont = font }
+                                        .clickable { onFontFamilySelected(fontFamily) }
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -805,26 +769,8 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                     }
                 }
 
-                // 4. Page Slider — hidden when: reading chapter, OR theme/font panel visible
-                //    Matches HTML: pageIndicator { display: none } when theme/font widget visible
-                if (!isReadingChapter && !isThemePanelVisible && !isFontPanelVisible && !isTtsBarVisible) {
-                    var pageProgress by remember { mutableFloatStateOf(0f) }
-                    Slider(
-                        value = pageProgress,
-                        onValueChange = { pageProgress = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 0.dp),
-                        colors = SliderDefaults.colors(
-                            thumbColor = goldColor,
-                            activeTrackColor = goldColor,
-                            inactiveTrackColor = alternateColor
-                        )
-                    )
-                }
-
-                // 5. Bottom Icons Row — hidden when: reading chapter OR tts bar visible
-                if (!isReadingChapter && !isTtsBarVisible) {
+                // 5. Bottom Icons Row — hidden when: reading chapter
+                if (!isReadingChapter) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -832,42 +778,30 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                             .padding(bottom = 12.dp, top = 4.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        // Contents — use FormatListBulleted (list with lines, matches HTML)
                         BottomNavIconBtn(
                             icon = Icons.Default.FormatListBulleted,
                             label = "Contents",
                             tint = text2Color,
                             onClick = onOpenOutline
                         )
-                        // Bookmarks
                         BottomNavIconBtn(
                             icon = Icons.Default.Bookmark,
                             label = "Bookmarks",
                             tint = text2Color,
-                            onClick = onBookmark
+                            onClick = onOpenBookmarks
                         )
-                        // Fullscreen
                         BottomNavIconBtn(
                             icon = if (isFullscreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
                             label = "Full Screen",
                             tint = text2Color,
                             onClick = onToggleFullscreen
                         )
-                        // Rotation  (reusing RotateRight as rotation icon)
-                        BottomNavIconBtn(
-                            icon = Icons.Default.RotateRight,
-                            label = "Rotation",
-                            tint = text2Color,
-                            onClick = { /* rotation toggle */ }
-                        )
-                        // Brightness / Theme
                         BottomNavIconBtn(
                             icon = Icons.Default.WbSunny,
                             label = "Brightness",
                             tint = if (isThemePanelVisible) primaryColor else text2Color,
                             onClick = onToggleThemePanel
                         )
-                        // Font
                         BottomNavIconBtn(
                             icon = Icons.Default.TextFields,
                             label = "Font",
@@ -1084,11 +1018,36 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
         }
     }
 
+    private fun currentScreenBrightness(): Float {
+        val value = requireActivity().window.attributes.screenBrightness
+        return if (value in 0f..1f) value else 0.8f
+    }
+
+    private fun applyScreenBrightness(value: Float) {
+        val window = requireActivity().window
+        val attrs = window.attributes
+        attrs.screenBrightness = value.coerceIn(0f, 1f)
+        window.attributes = attrs
+    }
+
     private fun setupObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 navigator.currentLocator
                     .onEach { model.saveProgression(it) }
+                    .launchIn(this)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.getBookmarks()
+                    .combine(navigator.currentLocator) { bookmarks, locator ->
+                        locator?.let { current ->
+                            bookmarks.any { bookmark -> bookmark.matches(current) }
+                        } ?: false
+                    }
+                    .onEach { isBookmarked = it }
                     .launchIn(this)
             }
         }
@@ -1101,6 +1060,26 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
             setupSearch(viewLifecycleOwner.lifecycleScope)
             setupTts()
         }
+    }
+
+    private fun Bookmark.matches(locator: Locator): Boolean {
+        if (resourceHref != locator.href.toString()) {
+            return false
+        }
+
+        val bookmarkPosition = this.locator.locations.position
+        val currentPosition = locator.locations.position
+        if (bookmarkPosition != null && currentPosition != null) {
+            return bookmarkPosition == currentPosition
+        }
+
+        val bookmarkProgression = this.locator.locations.progression
+        val currentProgression = locator.locations.progression
+        if (bookmarkProgression != null && currentProgression != null) {
+            return abs(bookmarkProgression - currentProgression) < 0.001
+        }
+
+        return true
     }
 
     private suspend fun setupHighlights(scope: CoroutineScope) {
@@ -1266,21 +1245,10 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                 menu.findItem(R.id.highlight).isVisible = true
                 menu.findItem(R.id.underline).isVisible = true
                 menu.findItem(R.id.note).isVisible = true
-                menu.findItem(R.id.copy).isVisible = true
+                menu.findItem(R.id.copy).isVisible = false
                 menu.findItem(R.id.web_search).isVisible = true
             }
-            // Show TTS selection bar when user selects text
-            if (!isReadingChapter) {
-                isTtsBarVisible = true
-                isTtsListening = false
-            }
             return true
-        }
-
-        override fun onDestroyActionMode(mode: ActionMode) {
-            super.onDestroyActionMode(mode)
-            // Don't hide TTS bar on destroy — user may still want to Listen/Stop
-            // It closes via the X button: onCloseTtsBar
         }
 
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
@@ -1288,7 +1256,6 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                 R.id.highlight -> showHighlightPopupWithStyle(Highlight.Style.HIGHLIGHT)
                 R.id.underline -> showHighlightPopupWithStyle(Highlight.Style.UNDERLINE)
                 R.id.note -> showAnnotationPopup()
-                R.id.copy -> copySelectionToClipboard()
                 R.id.web_search -> searchSelectionOnWeb()
                 else -> return false
             }

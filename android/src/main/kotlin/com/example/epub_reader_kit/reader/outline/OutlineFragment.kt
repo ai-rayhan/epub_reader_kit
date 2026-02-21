@@ -8,8 +8,12 @@ package com.example.epub_reader_kit.reader.outline
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.setFragmentResult
@@ -59,6 +63,18 @@ class OutlineFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menu.clear()
+                }
+
+                override fun onMenuItemSelected(menuItem: android.view.MenuItem): Boolean = false
+            },
+            viewLifecycleOwner
+        )
+
         val outlines: List<Outline> = when {
             publication.conformsTo(Publication.Profile.EPUB) -> listOf(
                 Outline.Contents,
@@ -76,6 +92,26 @@ class OutlineFragment : Fragment() {
                 outlines[idx].label
             )
         }.attach()
+
+        val initialOutline = arguments?.getString(ARG_INITIAL_OUTLINE)
+        if (initialOutline == INITIAL_BOOKMARKS) {
+            val bookmarksTabIndex = outlines.indexOf(Outline.Bookmarks)
+            if (bookmarksTabIndex >= 0) {
+                binding.outlinePager.setCurrentItem(bookmarksTabIndex, false)
+            }
+        }
+    }
+
+    companion object {
+        private const val ARG_INITIAL_OUTLINE = "initial_outline"
+        private const val INITIAL_BOOKMARKS = "bookmarks"
+
+        fun createArguments(openBookmarksTab: Boolean = false): Bundle =
+            Bundle().apply {
+                if (openBookmarksTab) {
+                    putString(ARG_INITIAL_OUTLINE, INITIAL_BOOKMARKS)
+                }
+            }
     }
 }
 

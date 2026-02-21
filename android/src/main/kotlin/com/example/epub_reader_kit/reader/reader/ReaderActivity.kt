@@ -49,6 +49,7 @@ open class ReaderActivity : AppCompatActivity() {
 
         val binding = ActivityReaderBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
         this.binding = binding
 
@@ -153,6 +154,8 @@ open class ReaderActivity : AppCompatActivity() {
         when (command) {
             is ReaderViewModel.ActivityCommand.OpenOutlineRequested ->
                 showOutlineFragment()
+            is ReaderViewModel.ActivityCommand.OpenBookmarksRequested ->
+                showOutlineFragment(openBookmarksTab = true)
             is ReaderViewModel.ActivityCommand.OpenExternalLink ->
                 launchWebBrowser(this, command.url.toUri())
             is ReaderViewModel.ActivityCommand.ToastError ->
@@ -160,14 +163,14 @@ open class ReaderActivity : AppCompatActivity() {
         }
     }
 
-    private fun showOutlineFragment() {
+    private fun showOutlineFragment(openBookmarksTab: Boolean = false) {
         val outlineFragment = supportFragmentManager.findFragmentByTag(OUTLINE_FRAGMENT_TAG)
         if(outlineFragment == null) {
             supportFragmentManager.commit {
                 add(
                     R.id.activity_container,
                     OutlineFragment::class.java,
-                    Bundle(),
+                    OutlineFragment.createArguments(openBookmarksTab),
                     OUTLINE_FRAGMENT_TAG
                 )
                 hide(readerFragment)

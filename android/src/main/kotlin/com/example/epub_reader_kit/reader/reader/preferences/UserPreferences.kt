@@ -28,6 +28,7 @@ import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.epub.EpubLayout
 import org.readium.r2.shared.util.Language
 import com.example.epub_reader_kit.reader.LITERATA
+import com.example.epub_reader_kit.reader.NOTO_SERIF_BENGALI
 import com.example.epub_reader_kit.reader.R
 import com.example.epub_reader_kit.reader.reader.ReaderViewModel
 import com.example.epub_reader_kit.reader.reader.tts.TtsPreferencesEditor
@@ -461,6 +462,7 @@ private fun ReflowableUserPreferences(
                     .withSupportedValues(
                         null,
                         FontFamily.LITERATA,
+                        FontFamily.NOTO_SERIF_BENGALI,
                         FontFamily.SANS_SERIF,
                         FontFamily.IA_WRITER_DUOSPACE,
                         FontFamily.ACCESSIBLE_DFA,
@@ -648,6 +650,16 @@ val <P : Configurable.Preferences<P>> PreferencesEditor<P>.presets: List<Preset>
             when (layout) {
                 EpubLayout.FIXED -> emptyList()
                 EpubLayout.REFLOWABLE -> listOf(
+                    Preset("BoiAro (default)") {
+                        backgroundColor.set(Color(0xFFF2EDE3.toInt()))
+                        textColor.set(Color(0xFF1F1F1F.toInt()))
+                        fontFamily.set(FontFamily.NOTO_SERIF_BENGALI)
+                        fontSize.set(1.125) // 18px equivalent from 16px base
+                        lineHeight.set(1.75)
+                        paragraphSpacing.set(0.12) // 12%
+                        publisherStyles.set(false) // Justify off / custom text align enabled
+                        textAlign.set(ReadiumTextAlign.START)
+                    },
                     Preset("Increase legibility") {
                         wordSpacing.set(0.6)
                         fontSize.set(1.4)

@@ -33,10 +33,14 @@ import org.readium.r2.navigator.epub.EpubPreferences
 import org.readium.r2.navigator.epub.EpubPreferencesSerializer
 import org.readium.r2.navigator.epub.EpubPublicationPreferencesFilter
 import org.readium.r2.navigator.epub.EpubSharedPreferencesFilter
+import org.readium.r2.navigator.preferences.Color as ReadiumColor
 import org.readium.r2.navigator.preferences.Configurable
+import org.readium.r2.navigator.preferences.FontFamily
 import org.readium.r2.navigator.preferences.PreferencesFilter
 import org.readium.r2.navigator.preferences.PreferencesSerializer
+import org.readium.r2.navigator.preferences.TextAlign as ReadiumTextAlign
 import org.readium.r2.shared.ExperimentalReadiumApi
+import com.example.epub_reader_kit.reader.NOTO_SERIF_BENGALI
 import com.example.epub_reader_kit.reader.utils.extensions.stateInFirst
 import com.example.epub_reader_kit.reader.utils.tryOrNull
 
@@ -123,7 +127,16 @@ class EpubPreferencesManagerFactory(
     sharedPreferencesFilter = EpubSharedPreferencesFilter,
     publicationPreferencesFilter = EpubPublicationPreferencesFilter,
     preferencesSerializer = EpubPreferencesSerializer(),
-    emptyPreferences = EpubPreferences()
+    emptyPreferences = EpubPreferences(
+        backgroundColor = ReadiumColor(0xFFF2EDE3.toInt()),
+        textColor = ReadiumColor(0xFF1F1F1F.toInt()),
+        fontFamily = FontFamily.NOTO_SERIF_BENGALI,
+        fontSize = 1.125,
+        lineHeight = 1.75,
+        paragraphSpacing = 0.12,
+        publisherStyles = false,
+        textAlign = ReadiumTextAlign.START
+    )
 )
 
 class PdfiumPreferencesManagerFactory(

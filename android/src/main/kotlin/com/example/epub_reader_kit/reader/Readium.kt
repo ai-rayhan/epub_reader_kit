@@ -40,3 +40,12 @@ class Readium(context: Context) {
 
 @OptIn(ExperimentalReadiumApi::class)
 val FontFamily.Companion.LITERATA: FontFamily get() = FontFamily("Literata")
+
+@OptIn(ExperimentalReadiumApi::class)
+val FontFamily.Companion.NOTO_SANS_BENGALI: FontFamily get() = FontFamily("Noto Sans Bengali")
+
+@OptIn(ExperimentalReadiumApi::class)
+val FontFamily.Companion.NOTO_SERIF_BENGALI: FontFamily get() = FontFamily("Noto Serif Bengali")
+
+@OptIn(ExperimentalReadiumApi::class)
+val FontFamily.Companion.TIRO_BANGLA: FontFamily get() = FontFamily("Tiro Bangla")
