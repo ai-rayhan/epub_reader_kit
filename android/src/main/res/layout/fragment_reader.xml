@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragment_reader_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <SeekBar
+        android:id="@+id/readingProgressBar"
+        android:layout_width="match_parent"
+        android:layout_height="15dp"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:progressDrawable="@drawable/reader_progress_drawable"
+        android:splitTrack="true"
+        android:background="@android:color/transparent" />
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+</FrameLayout>

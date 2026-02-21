@@ -1,0 +1,317 @@
+<resources>
+    <string name="app_name" translatable="false">Wikisource Reader</string>
+    <!-- Others Strings -->
+    <string name="not_applicable">N/A</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="got_it">Got it</string>
+    <string name="network_error">Oops! Failed to connect with the server.</string>
+    <string name="network_error_retry">Try Again</string>
+    <string name="error">Oops! Something went wrong.</string>
+
+    <!-- Navigation titles -->
+    <string name="navigation_home">Home</string>
+    <string name="navigation_categories">Categories</string>
+    <string name="navigation_library">Library</string>
+    <string name="navigation_settings">Settings</string>
+
+    <!-- ToolTips -->
+    <string name="library_tooltip">TIP! Swipe library items left or right to share or view book details.</string>
+
+    <!-- Welcome Screen -->
+    <string name="welcome_screen_title">Thanks for installing Wikisource Reader!</string>
+    <string name="welcome_screen_desc">Choose your preferred ebook reader to embark on your reading journey.</string>
+    <string name="welcome_screen_button">Get Started</string>
+
+    <!-- Home screen. -->
+    <string name="home_header">All Books</string>
+    <string name="home_language_icon_desc">Sort by language</string>
+    <string name="home_search_icon_desc">Search books</string>
+    <string name="home_sort_icon_desc">Sort books</string>
+    <string name="language_menu_title">Browse by language</string>
+    <string name="sort_menu_title">Sort by</string>
+
+    <!-- Categories screen. -->
+    <string name="categories_header">Categories</string>
+    <string name="no_books_found_for_lang_and_cat">No books available in %s language for this category.</string>
+    <string name="sort_high_to_low">High to low popularity</string>
+    <string name="sort_low_to_high">Low to high popularity</string>
+    <string name="sort_a_to_z">Title A to Z</string>
+    <string name="sort_z_to_a">Title Z to A</string>
+    <string name="sort_random">Random</string>
+
+    <!-- Books Language Screen Labels -->
+    <string name="all_books_language_lebel">All Books</string>
+    <string name="arabic_language_label">Arabic</string>
+    <string name="assamese_language_label">Assamese</string>
+    <string name="bangla_language_label">Bangla</string>
+    <string name="catalan_language_label">Catalan</string>
+    <string name="czech_language_label">Czech</string>
+    <string name="danish_language_lebel">Danish</string>
+    <string name="english_language_label">English</string>
+    <string name="spanish_language_label">Spanish</string>
+    <string name="french_language_label">French</string>
+    <string name="gujarati_language_label">Gujarati</string>
+    <string name="hindi_language_label">Hindi</string>
+    <string name="indonesian_language_label">Indonesian</string>
+    <string name="italian_language_label">Italian</string>
+    <string name="javanese_language_label">Javanese</string>
+    <string name="kannada_language_label">Kannada</string>
+    <string name="malayalam_language_label">Malayalam</string>
+    <string name="marathi_language_label">Marathi</string>
+    <string name="malay_language_label">Malay</string>
+    <string name="polish_language_label">Polish</string>
+    <string name="punjabi_language_label">Punjabi</string>
+    <string name="sundanese_language_label">Sundanese</string>
+    <string name="swedish_language_label">Swedish</string>
+    <string name="tamil_language_label">Tamil</string>
+    <string name="telugu_language_label">Telugu</string>
+    <string name="tulu_language_label">Tulu</string>
+    <string name="ukrainian_language_label">Ukrainian</string>
+    <string name="vietnamese_language_label">Vietnamese</string>
+
+
+    <!-- Library screen. -->
+    <string name="library_header">Library</string>
+    <string name="empty_library">Nothing Here!</string>
+    <string name="import_button_text">Import</string>
+    <string name="import_button_onboarding">Import your own books!</string>
+    <string name="import_button_onboarding_desc">Now you can import your own EPUB books and read them.</string>
+    <string name="import_button_desc">Import epub book</string>
+    <string name="epub_importing">Importing… \nPlease wait.</string>
+    <string name="epub_imported">Imported successfully!</string>
+    <string name="share_app_chooser">Share with…</string>
+    <string name="library_read_button">Read</string>
+    <string name="library_delete_button">Delete</string>
+    <string name="library_delete_dialog_title">Are you sure about that?</string>
+    <string name="downloading_book">Downloading book</string>
+    <string name="downloading">Downloading…</string>
+    <string name="download_complete">Download complete</string>
+    <string name="tap_to_view_library">Tap to view in Library</string>
+
+    <!-- Text selection -->
+    <string name="copy">Copy</string>
+    <string name="copied">Copied!</string>
+    <string name="web_search">Web Search</string>
+    <string name="share">Share</string>
+
+    <!-- Settings screen. -->
+    <string name="settings_header">Settings</string>
+    <string name="general_settings_header">General</string>
+    <string name="default_reader_dialog_title">Open ebooks with…</string>
+    <string name="reader_option_inbuilt">Inbuilt Reader</string>
+    <string name="reader_option_external">External Reader</string>
+    <string name="default_locale_setting">Default Locale</string>
+    <string name="default_locale_setting_desc">Select your preferred locale.</string>
+    <string name="locale_setting_not_found">Sorry! this feature is not yet supported by your OS.</string>
+    <string name="display_setting_header">Display</string>
+    <string name="theme_setting">Default Theme</string>
+    <string name="theme_dialog_title">Change Theme</string>
+    <string name="theme_option_light">Light</string>
+    <string name="theme_option_dark">Dark</string>
+    <string name="theme_option_system">System Default</string>
+    <string name="theme_dialog_apply_button">Apply</string>
+    <string name="amoled_theme_setting">Black Theme</string>
+    <string name="amoled_theme_setting_disabled_desc">Enable Amoled Black Theme</string>
+    <string name="amoled_theme_setting_enabled_desc">Disable Amoled Black Theme</string>
+    <string name="material_you_setting" translatable="false">Material You</string>
+    <string name="material_you_setting_disabled_desc">Enable Material You</string>
+    <string name="material_you_setting_enabled_desc">Disable Material You</string>
+    <string name="material_you_error">This feature is only for devices running Android 12 or above.</string>
+    <string name="miscellaneous_setting_header">Miscellaneous</string>
+    <string name="license_setting">License &amp; Acknowledgements</string>
+    <string name="license_setting_desc">Open source licenses.</string>
+    <string name="about_setting">App Information</string>
+    <string name="about_setting_desc">Show App information &amp; useful links</string>
+
+    <!-- Books card -->
+    <string name="cover_image_desc">Book cover image</string>
+
+    <!-- Book Detail Screen -->
+    <string name="book_detail_header">Book Details</string>
+    <string name="back_button_desc">Go back.</string>
+    <string name="share_intent_header">Share this using…</string>
+    <string name="read_book_button">Start Reading</string>
+    <string name="download_book_button">Download</string>
+    <string name="download_started">Download Started!</string>
+    <string name="book_synopsis">Synopsis</string>
+    <string name="book_synopsis_not_found">Not available</string>
+    <string name="unknown_author_info">Unknown Author</string>
+    <string name="editors_info">Editors</string>
+    <string name="translators_info">Translators</string>
+    <string name="genres_info">Genres</string>
+    <string name="subjects_info">Subjects</string>
+    <string name="publishers_info">Publisher</string>
+    <string name="unknown_publishers_info">Unknown Publisher</string>
+    <string name="place_of_publication_info">Place Of Publication</string>
+    <string name="unknown_place_of_publication_info">Unknown place Of Publication</string>
+
+    <!-- About Screen -->
+    <string name="about_header">About</string>
+    <string name="about_desc">Read freely-licensed texts from Wikisource</string>
+    <string name="useful_links">Useful Links</string>
+    <string name="shivam">Website</string>
+    <string name="link_privacy_policy">Privacy Policy</string>
+    <string name="link_privacy_policy_desc">Read our latest privacy policy.</string>
+
+    <!-- Open source libraries screen -->
+    <string name="open_source_licenses_header">Licenses</string>
+    <string name="category_novels">Novels</string>
+    <string name="category_plays">Plays</string>
+    <string name="category_poetry">Poetry</string>
+    <string name="category_essays">Essays</string>
+    <string name="developed_by_ws">Developed for Wikisource by</string>
+    <string name="org_name">CIS A2K</string>
+    <string name="category_shortstories">Short Stories</string>
+    <string name="category_narration">Narration</string>
+    <string name="category_biography">Biography</string>
+    <string name="category_dictionaries">Dictionaries</string>
+    <string name="category_encyclopedias">Encyclopedias</string>
+
+    <string name="epubactivity_set_bookmark">Add a bookmark</string>
+    <string name="epubactivity_settings">User Settings</string>
+    <string name="epubactivity_book_nav_options">Book navigation menu</string>
+    <string name="epubactivity_read_aloud_start">Read Aloud</string>
+    <string name="epubactivity_search">Search</string>
+
+    <string name="more_options">More Options</string>
+    <string name="popup_delete_button">DELETE</string>
+
+    <string name="app_version_header">Version</string>
+    <string name="app_version_label">App Version:</string>
+    <string name="app_version" translatable="false">2.2.0</string>
+    <string name="github_tab_label">GitHub Tag:</string>
+    <string name="github_tag" translatable="false">2.2.0</string>
+
+    <string name="copyright_label">Copyright</string>
+    <string name="copyright">\@ 2019 European Digital Reading Lab</string>
+    <string name="bsd_license_label">[BSD-3 license]</string>
+    <string name="bsd_license_label_accessible">[B S D 3 license]</string>
+    <string name="acknowledgements_label">Acknowledgements</string>
+    <string name="acknowledgements_french_state">R2 Reader wouldn\'t have been developed without the financial help of the French state.</string>
+    <string name="catalog_list_more">More</string>
+
+    <string name="zero">00:00</string>
+    <string name="chapter_page">Chapter / Page</string>
+    <string name="progression">Progression</string>
+    <string name="timestamp">Timestamp</string>
+
+    <!-- Outlines -->
+    <string name="contents_tab_label">Contents</string>
+    <string name="bookmarks_tab_label">Bookmarks</string>
+    <string name="highlights_tab_label">Highlights</string>
+    <string name="pagelist_tab_label">Page List</string>
+    <string name="landmarks_tab_label">Landmarks</string>
+    <string name="action_mode_menu_highlight">Highlight</string>
+    <string name="action_mode_menu_underline">Underline</string>
+    <string name="action_mode_menu_note">Note</string>
+    <string name="bookmark_added">Bookmark added</string>
+    <string name="bookmark_exists">Bookmark already exists</string>
+
+    <string name="cover_image">Cover Image</string>
+    <string name="repfr">The logo of the French Republic: A woman (Marianne) facing right; the blue, white, and red flag; the words "République Française"; and the motto "Liberté, Égalité, Fraternité" ("Liberty, Equality, Fraternity").</string>
+
+    <string name="details">Details</string>
+    <string name="close">Close</string>
+    <string name="delete">Delete</string>
+    <string name="confirm_delete_book_title">Delete Book?</string>
+    <string name="confirm_delete_book_text">Are you sure you want to delete this book?</string>
+    <string name="confirm_delete_catalog_title">Delete Catalog?</string>
+    <string name="confirm_delete_catalog_text">Are you sure you want to delete this Catalog feed?</string>
+
+    <string name="add_book">Add a Book</string>
+    <string name="add_catalog">Add an Catalog Feed</string>
+    <string name="save">Save</string>
+    <string name="enter_title">Enter the Title</string>
+    <string name="enter_url">Enter the URL</string>
+    <string name="invalid_title">Please enter a title</string>
+    <string name="invalid_url">Please enter a valid URL</string>
+    <string name="catalog_parse_error">Error parsing Catalog feed. Please check the URL and try again</string>
+
+    <string name="return_publication">This will return the publication</string>
+    <string name="return_button">Return</string>
+
+    <string name="opening_publication_cannot_render">Cannot render publication.</string>
+    <string name="opening_publication_audio_engine_initialization">Could not open publication because audio engine initialization failed.</string>
+
+    <string name="import_publication_unexpected_io_exception">Unable to add publication due to an unexpected error on your device</string>
+    <string name="import_publication_download_failed">Publication download failed.</string>
+    <string name="import_publication_no_acquisition">Acquisition is not possible.</string>
+
+    <string name="import_publication_success">Publication added to your library</string>
+    <string name="import_publication_unable_add_pub_database">Unable to add publication to the database</string>
+    <string name="import_publication_inconsistent_state">Import failed because of exceptional conditions. Please try again.</string>
+
+    <string name="publication_error_unsupported_asset">Asset format is not supported</string>
+    <string name="publication_error_network_forbidden">Server denied access to a resource.</string>
+    <string name="publication_error_network_not_found">A resource has not been found on the server.</string>
+    <string name="publication_error_network_unreachable">Server cannot be reached.</string>
+    <string name="publication_error_network_timeout">Server was too long to respond.</string>
+    <string name="publication_error_network_ssl_handshake">A SSL error occurred.</string>
+    <string name="publication_error_network_unexpected">An unexpected network error occurred.</string>
+    <string name="publication_error_filesystem_not_found">A file has not been found.</string>
+    <string name="publication_error_filesystem_forbidden">You are not allowed to access the file.</string>
+    <string name="publication_error_filesystem_unexpected">An unexpected filesystem error occurred.</string>
+    <string name="publication_error_filesystem_insufficient_space">There is not enough space left on the device.</string>
+    <string name="publication_error_incorrect_credentials">Provided credentials were incorrect</string>
+    <string name="publication_error_out_of_memory">There is not enough memory on this device to open the publication.</string>
+    <string name="publication_error_scheme_not_supported">Publication source is not supported.</string>
+    <string name="publication_error_invalid_publication">Publication looks corrupted.</string>
+    <string name="publication_error_unexpected">An unexpected error occurred.</string>
+
+    <!-- LcpError User Messages -->
+
+    <plurals name="lcp_error_license_status.revoked">
+        <item quantity="one">This license was revoked by its provider on %1$s. It was registered by %2$d device.</item>
+        <item quantity="other">This license was revoked by its provider on %1$s. It was registered by %2$d devices.</item>
+    </plurals>
+
+    <string name="missing_lcp_support">The application was compiled without LCP support.</string>
+    <string name="reader_error">Error</string>
+    <string name="opening_error">Could not open publication</string>
+    <string name="import_error">Import error</string>
+
+    <string name="failed_parsing_catalog">Failed parsing Catalog</string>
+    <string name="no_result">No result</string>
+    <string name="note">Note</string>
+    <string name="add_a_note">Add a note</string>
+    <string name="add_an_annotation">Add an annotation</string>
+    <string name="delete_highlight_or_annotation">Delete highlight or annotation</string>
+    <string name="yellow">Yellow</string>
+    <string name="green">Green</string>
+    <string name="blue">Blue</string>
+    <string name="red">Red</string>
+    <string name="purple">Purple</string>
+    <string name="seek_bar">Seek bar</string>
+    <string name="go_backward_30_seconds">Go backward 30 seconds</string>
+    <string name="play_or_pause">Play or pause</string>
+    <string name="go_forward_30_seconds">Go forward 30 seconds</string>
+
+    <string name="tts_error_initialization">Failed to initialize the TTS engine</string>
+    <string name="tts_error_language_support_incomplete">The language %s requires additional data. Do you want to download it?</string>
+    <string name="tts_error_network">A networking error occurred</string>
+    <string name="tts_error_other">A TTS error occurred</string>
+    <string name="tts_next">Go forward</string>
+    <string name="tts_pause">Pause</string>
+    <string name="tts_play">Play</string>
+    <string name="tts_previous">Go backward</string>
+    <string name="speed_rate">Speed</string>
+    <string name="pitch_rate">Pitch</string>
+    <string name="tts_settings">Speech settings</string>
+    <string name="tts_stop">Stop</string>
+    <string name="tts_voice">Voice</string>
+
+    <string name="search_error_not_searchable">This publication is not searchable</string>
+    <string name="search_error_cancelled">The search was cancelled</string>
+    <string name="search_error_other">An error occurred while searching</string>
+
+
+    <string name="error_unexpected">An unexpected error occurred.</string>
+    <string name="go_to_library">Go to library</string>
+    <string name="org_website" translatable="false">cis-india.org</string>
+    <string name="link_metapage_desc">Visit our page</string>
+    <string name="link_sourcecode_repo">View GitHub Repo</string>
+    <string name="link_sourcecode">GitHub</string>
+    <string name="woops">Oops!</string>
+</resources>
