@@ -2,7 +2,7 @@ group 'com.example.epub_reader_kit'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '2.1.0'
+    ext.kotlin_version = '2.0.21'
     repositories {
         google()
         mavenCentral()
@@ -13,7 +13,6 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlin_version"
-        classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.1.0-1.0.29"
     }
 }
 
@@ -29,11 +28,11 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
-apply plugin: 'com.google.devtools.ksp'
 
 android {
-    namespace = "org.cis_india.wsreader"
+    namespace = "com.example.epub_reader_kit.reader"
     compileSdk = 35
 
     compileOptions {
@@ -72,7 +71,7 @@ android {
 
 dependencies {
     def readiumVersion = "3.1.2"
-    def roomVersion = "2.6.1"
+    def roomVersion = "2.7.0"
     def composeBom = platform("androidx.compose:compose-bom:2024.09.02")
 
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
@@ -123,7 +122,7 @@ dependencies {
 
     implementation "androidx.room:room-runtime:$roomVersion"
     implementation "androidx.room:room-ktx:$roomVersion"
-    ksp "androidx.room:room-compiler:$roomVersion"
+    kapt "androidx.room:room-compiler:$roomVersion"
 
     implementation "org.readium.kotlin-toolkit:readium-shared:$readiumVersion"
     implementation "org.readium.kotlin-toolkit:readium-streamer:$readiumVersion"

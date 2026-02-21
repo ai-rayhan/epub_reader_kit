@@ -4,7 +4,7 @@ import 'dart:io';
 
 class EpubReaderService {
   static const MethodChannel _channel = MethodChannel(
-    'com.example.ebook_reader/wikisource',
+    'com.example.epub_reader_kit/reader',
   );
   static final StreamController<int> _pageChangeController =
       StreamController<int>.broadcast();

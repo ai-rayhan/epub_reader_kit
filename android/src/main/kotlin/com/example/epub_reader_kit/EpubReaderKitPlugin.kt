@@ -16,10 +16,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.cis_india.wsreader.WikisourceReader
-import org.cis_india.wsreader.data.db.AppDatabase
-import org.cis_india.wsreader.domain.Bookshelf
-import org.cis_india.wsreader.reader.ReaderActivityContract
+import com.example.epub_reader_kit.reader.EpubReaderKitApp
+import com.example.epub_reader_kit.reader.data.db.AppDatabase
+import com.example.epub_reader_kit.reader.domain.Bookshelf
+import com.example.epub_reader_kit.reader.reader.ReaderActivityContract
 import org.readium.r2.shared.util.toAbsoluteUrl
 import java.io.File
 
@@ -77,11 +77,11 @@ class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Acti
                     return@launch
                 }
 
-                val app = hostActivity.application as? WikisourceReader
+                val app = hostActivity.application as? EpubReaderKitApp
                 if (app == null) {
                     result.error(
                         "INVALID_APPLICATION",
-                        "Application must be org.cis_india.wsreader.WikisourceReader for native reader runtime.",
+                        "Application must be com.example.epub_reader_kit.reader.EpubReaderKitApp for native reader runtime.",
                         hostActivity.application.javaClass.name
                     )
                     return@launch
@@ -113,11 +113,11 @@ class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Acti
 
         scope.launch {
             try {
-                val app = hostActivity.application as? WikisourceReader
+                val app = hostActivity.application as? EpubReaderKitApp
                 if (app == null) {
                     result.error(
                         "INVALID_APPLICATION",
-                        "Application must be org.cis_india.wsreader.WikisourceReader for native reader runtime.",
+                        "Application must be com.example.epub_reader_kit.reader.EpubReaderKitApp for native reader runtime.",
                         hostActivity.application.javaClass.name
                     )
                     return@launch
@@ -148,7 +148,7 @@ class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Acti
 
     private suspend fun handleImportAndOpen(
         hostActivity: Activity,
-        app: WikisourceReader,
+        app: EpubReaderKitApp,
         result: MethodChannel.Result,
     ) {
         val event = withTimeoutOrNull(180000) {
@@ -191,7 +191,7 @@ class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Acti
 
     private suspend fun openReaderById(
         hostActivity: Activity,
-        app: WikisourceReader,
+        app: EpubReaderKitApp,
         bookId: Long,
         result: MethodChannel.Result,
     ) {
@@ -234,7 +234,7 @@ class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Acti
     }
 
     companion object {
-        private const val CHANNEL_NAME = "com.example.ebook_reader/wikisource"
+        private const val CHANNEL_NAME = "com.example.epub_reader_kit/reader"
         private val mainHandler = Handler(Looper.getMainLooper())
 
         @Volatile

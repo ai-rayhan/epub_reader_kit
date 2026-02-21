@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Wikisource Reader</string>
+    <string name="app_name" translatable="false">EPUB Reader Kit</string>
     <!-- Others Strings -->
     <string name="not_applicable">N/A</string>
     <string name="confirm">Confirm</string>
