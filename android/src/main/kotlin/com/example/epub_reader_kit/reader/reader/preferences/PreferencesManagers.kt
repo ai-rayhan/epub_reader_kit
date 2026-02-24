@@ -135,7 +135,7 @@ class EpubPreferencesManagerFactory(
         lineHeight = 1.75,
         paragraphSpacing = 0.12,
         publisherStyles = false,
-        textAlign = ReadiumTextAlign.START
+        textAlign = ReadiumTextAlign.JUSTIFY
     )
 )
 

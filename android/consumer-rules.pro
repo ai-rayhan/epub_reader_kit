@@ -1,1 +1,3 @@
-# Keep default empty; add rules if minification issues appear in consuming apps.
+# Keep Readium TTS classes that can be instantiated through indirect APIs in release builds.
+-keep class org.readium.navigator.media.tts.** { *; }
+-keep class org.readium.navigator.media.tts.android.** { *; }

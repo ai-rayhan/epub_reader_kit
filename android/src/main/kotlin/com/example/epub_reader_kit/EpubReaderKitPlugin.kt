@@ -21,6 +21,7 @@ import com.example.epub_reader_kit.reader.data.db.AppDatabase
 import com.example.epub_reader_kit.reader.domain.Bookshelf
 import com.example.epub_reader_kit.reader.reader.ReaderActivityContract
 import org.readium.r2.shared.util.toAbsoluteUrl
+import org.json.JSONObject
 import java.io.File
 
 class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
@@ -58,7 +59,47 @@ class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Acti
                 openBookFromUrl(epubUrl, sourceKey ?: "remote:$epubUrl", result)
             }
 
+            "getReadingProgress" -> {
+                val bookSource = call.argument<String>("bookSource")
+                if (bookSource.isNullOrBlank()) {
+                    result.error("INVALID_ARGUMENT", "bookSource is required", null)
+                    return
+                }
+                getReadingProgress(bookSource, result)
+            }
+
             else -> result.notImplemented()
+        }
+    }
+
+    private fun getReadingProgress(bookSource: String, result: MethodChannel.Result) {
+        val hostActivity = activity
+        if (hostActivity == null) {
+            result.error("NO_ACTIVITY", "Plugin requires foreground activity", null)
+            return
+        }
+
+        scope.launch {
+            try {
+                val progress = withContext(Dispatchers.IO) {
+                    val booksDao = AppDatabase.getDatabase(hostActivity.applicationContext).booksDao()
+                    val sourceKeys = sourceKeyCandidates(bookSource)
+                    var matchedProgression: String? = null
+
+                    for (key in sourceKeys) {
+                        val bookId = booksDao.getBookIdByIdentifier(key) ?: continue
+                        val book = booksDao.get(bookId) ?: continue
+                        matchedProgression = book.progression
+                        break
+                    }
+
+                    progressionPercentFromJson(matchedProgression)
+                }
+
+                result.success(progress)
+            } catch (e: Exception) {
+                result.error("GET_PROGRESS_FAILED", "Failed to fetch reading progress", e.message)
+            }
         }
     }
 
@@ -208,6 +249,40 @@ class EpubReaderKitPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Acti
             .onFailure {
                 result.error("OPEN_FAILED", "Failed to open reader", it.message)
             }
+    }
+
+    private fun sourceKeyCandidates(bookSource: String): List<String> {
+        val trimmed = bookSource.trim()
+        if (trimmed.startsWith("local:") || trimmed.startsWith("remote:")) {
+            return listOf(trimmed)
+        }
+
+        val isRemote = trimmed.startsWith("http://") || trimmed.startsWith("https://")
+        return if (isRemote) {
+            listOf(trimmed, "remote:$trimmed")
+        } else {
+            listOf(trimmed, "local:$trimmed")
+        }
+    }
+
+    private fun progressionPercentFromJson(rawProgression: String?): Int {
+        if (rawProgression.isNullOrBlank()) return 0
+        return try {
+            val progression = JSONObject(rawProgression)
+                .optJSONObject("locations")
+                ?.let { locations ->
+                    when {
+                        locations.has("totalProgression") -> locations.optDouble("totalProgression", 0.0)
+                        locations.has("progression") -> locations.optDouble("progression", 0.0)
+                        else -> 0.0
+                    }
+                }
+                ?: 0.0
+
+            (progression * 100.0).toInt().coerceIn(0, 100)
+        } catch (_: Exception) {
+            0
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {

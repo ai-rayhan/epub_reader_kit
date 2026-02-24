@@ -10,8 +10,11 @@ package com.example.epub_reader_kit.reader.shared.views
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -25,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import java.util.*
@@ -84,19 +88,44 @@ private fun <T> ButtonGroupItem(
     onClear: (() -> Unit)?,
     onSelectedOptionChanged: (T) -> Unit,
 ) {
-    Item(title, isActive = isActive, onClear = onClear) {
-        ToggleButtonGroup(
-            options = options,
-            activeOption = activeOption,
-            selectedOption = selectedOption,
-            onSelectOption = { option -> onSelectedOptionChanged(option) }
-        ) { option ->
-            Text(
-                text = formatValue(option),
-                style = MaterialTheme.typography.labelMedium
-            )
+    ListItem(
+        headlineContent = {
+            Group(enabled = isActive) {
+                Text(title)
+            }
+        },
+        supportingContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp)
+            ) {
+                ToggleButtonGroup(
+                    options = options,
+                    activeOption = activeOption,
+                    selectedOption = selectedOption,
+                    onSelectOption = { option -> onSelectedOptionChanged(option) }
+                ) { option ->
+                    Text(
+                        text = formatValue(option),
+                        style = MaterialTheme.typography.labelMedium,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(min = 52.dp, max = 120.dp)
+                    )
+                }
+            }
+        },
+        trailingContent = {
+            IconButton(onClick = onClear ?: {}, enabled = onClear != null) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Backspace,
+                    contentDescription = "Clear"
+                )
+            }
         }
-    }
+    )
 }
 
 /**

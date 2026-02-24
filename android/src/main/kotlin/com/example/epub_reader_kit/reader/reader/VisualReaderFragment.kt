@@ -51,13 +51,17 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -96,6 +100,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.foundation.layout.WindowInsets as ComposeWindowInsets
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -113,7 +118,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlin.math.abs
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -245,8 +250,7 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
 
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .systemBarsPadding(),
+                    .fillMaxSize(),
                 content = { Overlay() }
             )
         }
@@ -330,14 +334,10 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                 onToggleFullscreen = { requireActivity().toggleSystemUi() },
                 onToggleChapterReading = {
                     val tts = model.tts ?: return@ReaderChrome
-                    if (!isReadingChapter) {
-                        tts.start(navigator)
-                        isReadingChapter = true
-                        isSpeechPlaying = true
-                    } else {
+                    if (isReadingChapter) {
                         tts.stop()
-                        isReadingChapter = false
-                        isSpeechPlaying = false
+                    } else {
+                        tts.start(navigator)
                     }
                 },
                 isThemePanelVisible = isThemePanelVisible,
@@ -414,6 +414,7 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
     ) {
         // Design tokens matching the HTML
         val bgColor       = ComposeColor.White
+        val chromeGlass   = ComposeColor.White.copy(alpha = 0.8f)
         val primaryColor  = ComposeColor(0xFF4B39EF)
         val textColor     = ComposeColor(0xFF14181B)
         val text2Color    = ComposeColor(0xFF57636C)
@@ -428,7 +429,8 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(bgColor)
+                    .windowInsetsPadding(ComposeWindowInsets.statusBars.only(WindowInsetsSides.Top))
+                    .background(chromeGlass)
                     .shadow(elevation = 1.dp)
             ) {
                 Row(
@@ -512,7 +514,8 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(bgColor)
+                    .windowInsetsPadding(ComposeWindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                    .background(chromeGlass)
                     .shadow(elevation = 1.dp)
             ) {
                 // 1. Speech Player Bar (when reading chapter) ─────────────
@@ -522,70 +525,67 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                     exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
                 ) {
                     ttsModel?.let { tts ->
-                        val showControls by tts.showControls.asStateWhenStarted()
                         val isPlaying by tts.isPlaying.asStateWhenStarted()
-                        if (showControls) {
-                            Column(
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(0.dp))
+                                .padding(horizontal = 8.dp, vertical = 10.dp)
+                        ) {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(0.dp))
-                                    .padding(horizontal = 8.dp, vertical = 10.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(alternateColor.copy(alpha = 0.4f))
+                                    .padding(horizontal = 4.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(alternateColor.copy(alpha = 0.4f))
-                                        .padding(horizontal = 4.dp, vertical = 6.dp),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // Settings
-                                        SpeechBtn(
-                                            icon = Icons.Default.Settings,
-                                            desc = "Settings",
-                                            tint = text2Color,
-                                            onClick = onTtsPreferences
-                                        )
-                                        // Previous sentence
-                                        SpeechBtn(
-                                            icon = Icons.Default.SkipPrevious,
-                                            desc = "Previous",
-                                            tint = text2Color,
-                                            onClick = { tts.previous() }
-                                        )
-                                        // Play / Pause
-                                        SpeechBtn(
-                                            icon = if (isSpeechPlaying && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                            desc = if (isSpeechPlaying && isPlaying) "Pause" else "Play",
-                                            tint = textColor,
-                                            size = 28.dp,
-                                            onClick = { if (isPlaying) tts.pause() else tts.play() }
-                                        )
-                                        // Next sentence
-                                        SpeechBtn(
-                                            icon = Icons.Default.SkipNext,
-                                            desc = "Next",
-                                            tint = text2Color,
-                                            onClick = { tts.next() }
-                                        )
-                                        // Stop
-                                        SpeechBtn(
-                                            icon = Icons.Default.Stop,
-                                            desc = "Stop",
-                                            tint = text2Color,
-                                            onClick = {
-                                                onToggleChapterReading()
-                                            }
-                                        )
-                                    }
+                                    // Settings
+                                    SpeechBtn(
+                                        icon = Icons.Default.Settings,
+                                        desc = "Settings",
+                                        tint = text2Color,
+                                        onClick = onTtsPreferences
+                                    )
+                                    // Previous sentence
+                                    SpeechBtn(
+                                        icon = Icons.Default.SkipPrevious,
+                                        desc = "Previous",
+                                        tint = text2Color,
+                                        onClick = { tts.previous() }
+                                    )
+                                    // Play / Pause
+                                    SpeechBtn(
+                                        icon = if (isSpeechPlaying && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        desc = if (isSpeechPlaying && isPlaying) "Pause" else "Play",
+                                        tint = textColor,
+                                        size = 28.dp,
+                                        onClick = { if (isPlaying) tts.pause() else tts.play() }
+                                    )
+                                    // Next sentence
+                                    SpeechBtn(
+                                        icon = Icons.Default.SkipNext,
+                                        desc = "Next",
+                                        tint = text2Color,
+                                        onClick = { tts.next() }
+                                    )
+                                    // Stop
+                                    SpeechBtn(
+                                        icon = Icons.Default.Stop,
+                                        desc = "Stop",
+                                        tint = text2Color,
+                                        onClick = {
+                                            onToggleChapterReading()
+                                        }
+                                    )
                                 }
                             }
-                        }
+                        } 
                     }
                 }
 
@@ -776,37 +776,42 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
                             .padding(bottom = 12.dp, top = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         BottomNavIconBtn(
                             icon = Icons.Default.FormatListBulleted,
                             label = "Contents",
                             tint = text2Color,
-                            onClick = onOpenOutline
+                            onClick = onOpenOutline,
+                            modifier = Modifier.weight(1f)
                         )
                         BottomNavIconBtn(
                             icon = Icons.Default.Bookmark,
                             label = "Bookmarks",
                             tint = text2Color,
-                            onClick = onOpenBookmarks
+                            onClick = onOpenBookmarks,
+                            modifier = Modifier.weight(1f)
                         )
                         BottomNavIconBtn(
                             icon = if (isFullscreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
                             label = "Full Screen",
                             tint = text2Color,
-                            onClick = onToggleFullscreen
+                            onClick = onToggleFullscreen,
+                            modifier = Modifier.weight(1f)
                         )
                         BottomNavIconBtn(
                             icon = Icons.Default.WbSunny,
                             label = "Brightness",
                             tint = if (isThemePanelVisible) primaryColor else text2Color,
-                            onClick = onToggleThemePanel
+                            onClick = onToggleThemePanel,
+                            modifier = Modifier.weight(1f)
                         )
                         BottomNavIconBtn(
                             icon = Icons.Default.TextFields,
                             label = "Font",
                             tint = if (isFontPanelVisible) primaryColor else text2Color,
-                            onClick = onToggleFontPanel
+                            onClick = onToggleFontPanel,
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -845,10 +850,12 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
         label: String,
         tint: ComposeColor,
         onClick: () -> Unit,
+        modifier: Modifier = Modifier,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
+                .then(modifier)
                 .clip(RoundedCornerShape(10.dp))
                 .clickable(onClick = onClick)
                 .padding(horizontal = 8.dp, vertical = 6.dp)
@@ -866,7 +873,8 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                maxLines = 1
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -1118,10 +1126,18 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
             // This will automatically turn pages when needed.
             position
                 .filterNotNull()
-                // Improve performances by throttling the moves to maximum one per second.
-                .throttleLatest(1.seconds)
+                // Keep spoken-word tracking responsive while avoiding over-updates.
+                .throttleLatest(250.milliseconds)
                 .observeWhenStarted(viewLifecycleOwner) { locator ->
                     navigator.go(locator, animated = false)
+                }
+
+            showControls
+                .observeWhenStarted(viewLifecycleOwner) { visible ->
+                    isReadingChapter = visible
+                    if (!visible) {
+                        isSpeechPlaying = false
+                    }
                 }
 
             // Prevent interacting with the publication (including page turns) while the TTS is
@@ -1129,6 +1145,7 @@ abstract class VisualReaderFragment : BaseReaderFragment() {
             isPlaying
                 .observeWhenStarted(viewLifecycleOwner) { isPlaying ->
                     disableTouches = isPlaying
+                    isSpeechPlaying = isPlaying
                 }
 
             // Highlight the currently spoken utterance.

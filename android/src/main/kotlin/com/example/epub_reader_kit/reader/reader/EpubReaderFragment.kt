@@ -43,8 +43,6 @@ import com.example.epub_reader_kit.reader.reader.preferences.UserPreferencesView
 import com.example.epub_reader_kit.reader.search.SearchFragment
 import android.widget.SeekBar
 import org.readium.r2.shared.publication.services.positions
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import android.widget.FrameLayout
 import org.readium.r2.navigator.epub.EpubPreferencesEditor
@@ -171,6 +169,13 @@ class EpubReaderFragment : VisualReaderFragment() {
     // save all book positions
     // to help navigate to these positions
     private var allBookPositions: List<Locator> = emptyList()
+    private var userIsSeeking: Boolean = false
+
+    private fun locatorProgression(locator: Locator): Double {
+        return locator.locations.totalProgression
+            ?: locator.locations.progression
+            ?: 0.0
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -178,50 +183,33 @@ class EpubReaderFragment : VisualReaderFragment() {
         val progressBar = view.findViewById<SeekBar>(R.id.readingProgressBar)
 
         val marginInPx = (12 * resources.displayMetrics.density).toInt()
-
-        ViewCompat.setOnApplyWindowInsetsListener(progressBar) { v, windowInsets ->
-            val systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-            v.updateLayoutParams<FrameLayout.LayoutParams> {
-                bottomMargin = systemBars.bottom + marginInPx
-            }
-
-            windowInsets
+        progressBar.updateLayoutParams<FrameLayout.LayoutParams> {
+            bottomMargin = marginInPx
         }
 
         progressBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, thumbSwiped: Boolean) {
-                // Handle progress changes
-                if (thumbSwiped && seekBar != null && booksPositionsStartProgression.isNotEmpty()) {
-
-                    val closestPoint = booksPositionsStartProgression.minByOrNull { Math.abs(it - progress) } ?: progress
-
-                    if (progress != closestPoint) {
-                        seekBar.progress = closestPoint
-                    }
-                }
-
+                // no-op
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                // handle start
+                userIsSeeking = true
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                userIsSeeking = false
 
                 // Navigate to selected progress
                 // When you release your thumb.
 
                 val progressOnThumbRelease = seekBar?.progress ?: return
+                if (allBookPositions.isEmpty()) return
 
-                val targetPositionLocator = allBookPositions.minByOrNull {
-                    val point = ((it.locations.totalProgression ?: 0.0) * 100).toInt()
-                    Math.abs(point - progressOnThumbRelease)
-                }
+                val targetIndex = ((progressOnThumbRelease / 100.0) * (allBookPositions.size - 1))
+                    .toInt()
+                    .coerceIn(0, allBookPositions.size - 1)
 
-                targetPositionLocator?.let {
-                    navigator.go(it)
-                }
+                navigator.go(allBookPositions[targetIndex])
             }
         })
 
@@ -231,21 +219,21 @@ class EpubReaderFragment : VisualReaderFragment() {
 
             // update seekbar snap points from book positions
             booksPositionsStartProgression = allBookPositions.map {
-                ((it.locations.totalProgression ?: 0.0) * 100).toInt()
+                (locatorProgression(it) * 100).toInt()
             }.distinct().sorted()
 
             // add seekbar max as the last position total progression
             // This enables seekbar to show accurate complete status
             // As progression does not get to 100 percent fully
-            if (booksPositionsStartProgression.isNotEmpty()) {
-                progressBar.max = booksPositionsStartProgression.last()
-            }
+            progressBar.max = 100
 
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 navigator.currentLocator.collect { locator ->
-                    val progress = locator?.locations?.totalProgression ?: 0.0
+                    val progress = locator?.let(::locatorProgression) ?: 0.0
                     val percentage = (progress * 100).toInt().coerceIn(0, 100)
-                    progressBar.progress = percentage
+                    if (!userIsSeeking) {
+                        progressBar.progress = percentage
+                    }
                     EpubReaderKitPlugin.emitEpubPageChanged(percentage)
                 }
             }
@@ -325,6 +313,20 @@ class EpubReaderFragment : VisualReaderFragment() {
     fun applyThemeFromChrome(theme: Theme) {
         val settings = model.settings as? UserPreferencesViewModel<EpubSettings, EpubPreferences> ?: return
         val editor = settings.editor.value as? EpubPreferencesEditor ?: return
+        when (theme) {
+            Theme.LIGHT -> {
+                editor.backgroundColor.set(org.readium.r2.navigator.preferences.Color(0xFFFFFFFF.toInt()))
+                editor.textColor.set(org.readium.r2.navigator.preferences.Color(0xFF1F1F1F.toInt()))
+            }
+            Theme.SEPIA -> {
+                editor.backgroundColor.set(org.readium.r2.navigator.preferences.Color(0xFFF2EDE3.toInt()))
+                editor.textColor.set(org.readium.r2.navigator.preferences.Color(0xFF2F2A22.toInt()))
+            }
+            Theme.DARK -> {
+                editor.backgroundColor.set(org.readium.r2.navigator.preferences.Color(0xFF121212.toInt()))
+                editor.textColor.set(org.readium.r2.navigator.preferences.Color(0xFFEAEAEA.toInt()))
+            }
+        }
         editor.theme.set(theme)
         settings.commit()
     }

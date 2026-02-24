@@ -6,13 +6,17 @@
 
 package com.example.epub_reader_kit.reader.utils.compose
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,7 +33,10 @@ fun <T> ToggleButtonGroup(
     enabled: (T) -> Boolean = { true },
     content: @Composable RowScope.(T) -> Unit,
 ) {
-    Row {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.horizontalScroll(rememberScrollState())
+    ) {
         for (option in options) {
             ToggleButton(
                 enabled = enabled(option),

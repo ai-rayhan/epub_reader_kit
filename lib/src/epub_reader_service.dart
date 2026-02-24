@@ -99,4 +99,21 @@ class EpubReaderService {
   static Future<bool> readBook({String? epubUrl, String? filePath}) {
     return open(epubUrl: epubUrl, filePath: filePath);
   }
+
+  /// Returns reading progress percentage (0-100) for a previously opened source.
+  ///
+  /// [bookSource] can be:
+  /// - raw local file path
+  /// - raw remote URL
+  /// - explicit source key (`local:<path>` or `remote:<url>`)
+  static Future<int> getProgress(String bookSource) async {
+    final source = bookSource.trim();
+    if (source.isEmpty) return 0;
+    _ensureCallbackHandler();
+
+    final result = await _channel.invokeMethod<int>('getReadingProgress', {
+      'bookSource': source,
+    });
+    return (result ?? 0).clamp(0, 100);
+  }
 }

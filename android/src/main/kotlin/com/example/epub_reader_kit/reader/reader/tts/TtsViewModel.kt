@@ -160,23 +160,36 @@ class TtsViewModel private constructor(
      * Starts the TTS using the first visible locator in the given [navigator].
      */
     fun start(navigator: Navigator) {
+        navigatorNow?.play()
+        if (navigatorNow != null) {
+            return
+        }
+
         if (launchJob != null) {
             return
         }
 
         launchJob = viewModelScope.launch {
-            openSession(navigator)
+            try {
+                openSession(navigator)
+            } finally {
+                // If opening the session failed, allow retry on next tap.
+                if (navigatorNow == null) {
+                    launchJob = null
+                }
+            }
         }
     }
 
     private suspend fun openSession(navigator: Navigator) {
         val start = (navigator as? VisualNavigator)?.firstVisibleElementLocator()
 
-        val ttsNavigator = ttsNavigatorFactory.createNavigator(
+        val ttsNavigatorTry = ttsNavigatorFactory.createNavigator(
             this,
             initialLocator = start,
             initialPreferences = preferencesManager.preferences.value
-        ).getOrElse {
+        )
+        val ttsNavigator = ttsNavigatorTry.getOrElse {
             val error = TtsError.Initialization(it)
             _events.send(Event.OnError(error))
             return

@@ -657,8 +657,8 @@ val <P : Configurable.Preferences<P>> PreferencesEditor<P>.presets: List<Preset>
                         fontSize.set(1.125) // 18px equivalent from 16px base
                         lineHeight.set(1.75)
                         paragraphSpacing.set(0.12) // 12%
-                        publisherStyles.set(false) // Justify off / custom text align enabled
-                        textAlign.set(ReadiumTextAlign.START)
+                        publisherStyles.set(false)
+                        textAlign.set(ReadiumTextAlign.JUSTIFY)
                     },
                     Preset("Increase legibility") {
                         wordSpacing.set(0.6)
